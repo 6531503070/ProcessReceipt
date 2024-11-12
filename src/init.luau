@@ -59,9 +59,9 @@ type ProcessReceiptObject = typeof(ProcessReceiptObject)
 		- Trove</em>
 ]]--
 function ProcessReceiptObject:Destroy()
-	if (type(self.Callback) == "function") then
-		ProcessReceipt._Processes[self.Callback] = nil	
-		self.Callback = nil	
+	if (type(self.Priority) == "function") then
+		ProcessReceipt._Processes[self.Priority] = nil	
+		self.Priority = nil	
 	end
 	setmetatable(self, nil)
 	table.clear(self)
@@ -88,12 +88,16 @@ end
 ]]--
 function ProcessReceipt.Register(Priority: number, Callback: (ReceiptInfo: ReceiptInfo) -> Enum.ProductPurchaseDecision?): ProcessReceiptObject?
 	if (type(Callback) == "function") then
-		local ProcessReceiptObject = setmetatable({
-			Priority = Priority,
-			Callback = Callback,
-		}, ProcessReceiptObject)
-		ProcessReceipt._Processes[Callback] = ProcessReceiptObject
-		return ProcessReceiptObject
+		if (type(ProcessReceipt._Processes[Priority]) == "table") then
+			warn(`[`, script, `]: Priority value = {Priority} existed. Try for another value.`)
+		else
+			local ProcessReceiptObject = setmetatable({
+				Priority = Priority,
+				Callback = Callback,
+			}, ProcessReceiptObject)
+			ProcessReceipt._Processes[Priority] = ProcessReceiptObject
+			return ProcessReceiptObject
+		end
 	end
 	return nil
 end
