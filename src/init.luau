@@ -1,7 +1,7 @@
 --[[
 	@Dev_Bas
 	ProcessReceipt v1.0.0:
-	A roblox module for MarketplaceService.ProcessReceipt provided callback simulate centralized
+	A typed roblox module for MarketplaceService.ProcessReceipt provided callback simulate centralized
 ]]
 
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -34,9 +34,7 @@ function ProcessReceiptEndpoint(receiptInfo: ReceiptInfo): Enum.ProductPurchaseD
 	local priorityList = toValues(ProcessReceipt._Processes)
 	
 	--@Descending // Highest to Lowest
-	table.sort(priorityList, function(v1, v2)
-		return v1.Priority > v2.Priority
-	end)
+	table.sort(priorityList, function(v1, v2) return v1.Priority > v2.Priority end)
 	
 	for _, processReceiptObject in ipairs(priorityList) do
 		local callback = processReceiptObject.Callback
