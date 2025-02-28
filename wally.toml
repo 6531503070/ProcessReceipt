@@ -1,0 +1,18 @@
+[package]
+name = "6531503070/processreceipt"
+version = "1.0.0"
+registry = "https://github.com/UpliftGames/wally-index"
+licence = "MIT"
+authors = ["6531503070"]
+description = "A type roblox module for MarketplaceService.ProcessReceipt provided callback simulate centralized"
+realm = "shared"
+exclude = ["**"]
+include = [
+    "default.project.json",
+    "src",
+    "src/**",
+    "LICENSE",
+    "wally.toml",
+]
+
+[dependencies]

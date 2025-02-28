@@ -1,16 +1,13 @@
---!native
---!optimize 2
-
 --[[
 	@Dev_Bas
 	ProcessReceipt v1.0.0:
-	A module serve MarketplaceService.ProcessReceipt callback simulate centralized.
-	To fix the problem where sometimes have another system integration to MarketplaceService.ProcessReceipt collision.
-	Which by default roblox offer you only can use one callback, for all in game monetization from devproduct.
-]]--
+	A roblox module for MarketplaceService.ProcessReceipt provided callback simulate centralized
+]]
+
+local MarketplaceService = game:GetService("MarketplaceService")
+local RunService = game:GetService("RunService")
 
 local ProcessReceipt = {}
-
 ProcessReceipt._Processes = {}
 
 export type ReceiptInfo = {
@@ -20,29 +17,39 @@ export type ReceiptInfo = {
 	PlayerId: number,
 	ProductId: number,
 	PurchaseId: string,
+	ProductPurchaseChannel: typeof(Enum.ProductPurchaseChannel),
 }
 
-function ToValues <T, K, V> (tbl: T & {[K]: V}): T & {V}
-	local Values = {}
+local function toValues <T, K, V> (tbl: T & {[K]: V}): T & {V}
+	local values = {}
+	
 	for _, V in pairs(tbl) do
-		table.insert(Values, V)
+		table.insert(values, V)
 	end
-	return Values
+	
+	return values
 end
 
-function ProcessReceiptEndpoint(ReceiptInfo: ReceiptInfo): Enum.ProductPurchaseDecision?
-	local PriorityList = ToValues(ProcessReceipt._Processes)
+function ProcessReceiptEndpoint(receiptInfo: ReceiptInfo): Enum.ProductPurchaseDecision?
+	local priorityList = toValues(ProcessReceipt._Processes)
+	
 	--@Descending // Highest to Lowest
-	table.sort(PriorityList, function(v1, v2) return v1.Priority > v2.Priority end)
-	for _, ProcessReceiptObject in ipairs(PriorityList) do
-		local Callback = ProcessReceiptObject.Callback
-		if (type(Callback) == "function") then
-			local IsPurchaseGranted = Callback(ReceiptInfo)
-			if (IsPurchaseGranted == Enum.ProductPurchaseDecision.PurchaseGranted) then
-				return IsPurchaseGranted
+	table.sort(priorityList, function(v1, v2)
+		return v1.Priority > v2.Priority
+	end)
+	
+	for _, processReceiptObject in ipairs(priorityList) do
+		local callback = processReceiptObject.Callback
+		
+		if type(callback) == "function" then
+			local isPurchaseGranted = callback(receiptInfo)
+			
+			if isPurchaseGranted == Enum.ProductPurchaseDecision.PurchaseGranted then
+				return isPurchaseGranted
 			end
 		end
 	end
+	
 	return Enum.ProductPurchaseDecision.NotProcessedYet
 end
 
@@ -51,67 +58,70 @@ ProcessReceiptObject.__index = ProcessReceiptObject
 
 type ProcessReceiptObject = typeof(ProcessReceiptObject)
 
---[[
+--[=[
 	A method for cleanup ProcessReceiptObject.
 	<em>Also get auto-cleanup object like
 		- Maid
 		- Janitor
 		- Trove</em>
-]]--
+]=]
 function ProcessReceiptObject:Destroy()
-	if (type(self.Priority) == "function") then
+	if type(self.Priority) == "function" then
 		ProcessReceipt._Processes[self.Priority] = nil	
 		self.Priority = nil	
 	end
+	
 	setmetatable(self, nil)
 	table.clear(self)
 end
 
---[[
+--[=[
 	A method for cleanup ProcessReceiptObject.
 	<em>Also get auto-cleanup object like
 		- Maid
 		- Janitor
 		- Trove</em>
-]]--
+]=]
 function ProcessReceiptObject:Disconnect()
 	self:Destroy()
 end
 
---[[
+--[=[
 	A callback process receipts of developer product purchases.
 	With use of <strong>@Priority</strong> that be able to set simulate multiple callback.
 	
 	<strong>- Parameters -</strong>
 	<strong>@Priority</strong>: number <em>--Descending // Highest to Lowest</em>
 	<strong>@Callback</strong>: (<strong>@ReceiptInfo</strong>: ReceiptInfo) -> (Enum.ProductPurchaseDecision?) <em></em>
-]]--
-function ProcessReceipt.Register(Priority: number, Callback: (ReceiptInfo: ReceiptInfo) -> Enum.ProductPurchaseDecision?): ProcessReceiptObject?
-	if (type(Callback) == "function") then
-		if (type(ProcessReceipt._Processes[Priority]) == "table") then
-			warn(`[`, script, `]: Priority value = {Priority} existed. Try for another value.`)
+]=]
+function ProcessReceipt.Register(priority: number, callback: (receiptInfo: ReceiptInfo) -> Enum.ProductPurchaseDecision?): ProcessReceiptObject?
+	if type(callback) == "function" then
+		if type(ProcessReceipt._Processes[priority]) == "table" then
+			warn(`[`, script, `]: Priority value = {priority} existed. Try for another value.`)
 		else
 			local ProcessReceiptObject = setmetatable({
-				Priority = Priority,
-				Callback = Callback,
+				Priority = priority,
+				Callback = callback,
 			}, ProcessReceiptObject)
-			ProcessReceipt._Processes[Priority] = ProcessReceiptObject
+			
+			ProcessReceipt._Processes[priority] = ProcessReceiptObject
+			
 			return ProcessReceiptObject
 		end
 	end
 	return nil
 end
 
---[[
+--[=[
 	A method for cleanup all ProcessReceiptObject.
-]]--
+]=]
 function ProcessReceipt.DisconnectAll()
 	table.clear(ProcessReceipt._Processes)
 end
 
 -- @OneEndpoint
-if game:GetService("RunService"):IsServer() then
-	game.MarketplaceService.ProcessReceipt = ProcessReceiptEndpoint
+if RunService:IsServer() then
+	MarketplaceService.ProcessReceipt = ProcessReceiptEndpoint
 end
 
 return ProcessReceipt
