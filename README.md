@@ -1,6 +1,6 @@
 # ProcessReceipt
 
-A module serve MarketplaceService.ProcessReceipt callback simulate centralized.
+A module provide MarketplaceService.ProcessReceipt callback simulate centralized.
 To fix the problem where sometimes have another system integration to MarketplaceService.ProcessReceipt collision.
 Which by default roblox offer you only can use one callback, for all in game monetization from devproduct.
 
